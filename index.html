@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta http-equiv="X-UA-Compatible" content="ie=edge" />
+    <title>Burger Connoisseur</title>
+    <script src="https://code.jquery.com/jquery-3.4.1.min.js"></script>
+  </head>
+
+  <body>
+    <div class="col-sm-4">
+      <h1>My Burger Bucket List</h1>
+      <ul id="wishlist"></ul>
+    </div>
+    ​
+    <div class="col-sm-4">
+      <h2>Add Burger to Wish List</h2>
+      <input id="addBurgerName" type="text" /><button
+        id="addBurger"
+        onClick="saveBurger()"
+      >
+        Add Burger!
+      </button>
+    </div>
+    ​
+    <div class="col-sm-4">
+      <h1>Burgers Consumed</h1>
+      <ul id="consumed">
+        <li><button onClick="ejectBurger()">Remove from List!</button></li>
+      </ul>
+    </div>
+    ​
+    <!-- <script src="../server.js"></script> -->
+    <script>
+      function saveBurger() {
+        const burgerName = $("#addBurgerName")
+          .val()
+          .trim();
+        console.log(`.. adding ${burgerName} to bucket list`);
+        $.ajax({
+          url: `/api/burgers/wishlist/${burgerName}`,
+          type: "POST",
+          success: function(result) {
+            console.log("Success");
+          }
+          $("#wishlist").append(`<li>${burgerName} <button onClick="consumeBurger()">Devour it!</button></li>`);
+        });
+      }
+
+      function consumeBurger() {
+       const burgerName = $("#addBurgerName")
+          .val()
+          .trim();
+        console.log(`.. adding ${burgerName} to bucket list`);
+        $.ajax({
+          url: `/api/burgers/consumed/${burgerName}`,
+          type: "POST",
+          success: function(result) {
+            console.log("Success");
+          }
+        });
+      }
+
+      function deleteMovie(id) {
+        console.log(`.. deleting movie ${id}`);
+        $.ajax({
+          url: `/api/movies/${id}`,
+          type: "DELETE",
+          success: function(result) {
+            console.log("Success");
+          }
+        });
+      }
+
+      function saveMovie() {
+        const movieName = $("#addMovieName")
+          .val()
+          .trim();
+        console.log(`.. saving movie ${movieName}`);
+        $.ajax({
+          url: `/api/movies/${movieName}`,
+          type: "POST",
+          success: function(result) {
+            console.log("Success");
+          }
+        });
+      }
+
+      function updateMovie() {
+        const movieId = Number($("#movieId").val());
+        const movieName = $("#updateMovieName")
+          .val()
+          .trim();
+        $.ajax({
+          url: `/api/movies/${movieName}`,
+          type: "PUT",
+          success: function(result) {
+            console.log("Success");
+          }
+        });
+      }
+      function listMovies() {
+        $("#movieList").empty();
+
+        const list = [{ id: 1, name: "Big Hero 6" }];
+        for (item in list) {
+          $("#movieList").append(`<li>${item.id}: ${item.name}</li>`);
+        }
+      }
+      $(document).ready(function() {
+        console.log(`Running our code`);
+        $("#saveMovie").on("click", saveMovie);
+      });
+    </script>
+  </body>
+</html>
