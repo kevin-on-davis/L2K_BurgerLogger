@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta http-equiv="X-UA-Compatible" content="ie=edge" />
+    <title>Burger Connoisseur</title>
+    <script src="https://code.jquery.com/jquery-3.4.1.min.js"></script>
+    <link
+      rel="stylesheet"
+      href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css"
+    />
+  </head>
+
+  <body>
+    <div class="container col" style="display:flex; background-color:lightblue">
+      <div class="col-sm-4">
+        <h1>My Burger Bucket List</h1>
+        <ul id="wishlist"></ul>
+      </div>
+      ​
+      <div class="col-sm-4">
+        <h2>Add Burger to Wish List</h2>
+        <input id="addBurgerName" type="text" /><button
+          id="addBurger"
+          onClick="saveBurger()"
+        >
+          Add Burger!
+        </button>
+      </div>
+      ​
+      <div class="col-sm-4">
+        <h1>Burgers Consumed</h1>
+        <ul id="consumed"></ul>
+      </div>
+    </div>
+    ​
+    <!-- <script src="../server.js"></script> -->
+    <script>
+      function listWishList() {
+        console.log(`.. listing bucket list`);
+        $.ajax({
+          url: `/burgers`,
+          type: "GET",
+          success: function(result) {
+            console.log("Success");
+            console.log(result);
+            result.forEach(burger => {
+              $("#wishlist").append(
+                `<li id="wishlist${burger.id}"><div style="justify-content: space-between">${burger.burger} <button id="${burger.burger}" value = ${burger.id} onClick="consumeBurger(${burger.id})">Devour it!</button></div></li>`
+              );
+            });
+          }
+        });
+      }
+
+      function listConsumed() {
+        console.log(`.. listing consumed list`);
+        $.ajax({
+          url: `/consumed`,
+          type: "GET",
+          success: function(result) {
+            console.log("Success");
+            console.log(result);
+            result.forEach(burger => {
+              $("#consumed").append(
+                `<li id="consumed${burger.id}"><div style="justify-content: space-between">${burger.burger}</div></li>`
+              );
+            });
+          }
+        });
+      }
+
+      function saveBurger() {
+        const burgerName = $("#addBurgerName")
+          .val()
+          .trim();
+        console.log(`.. adding ${burgerName} to bucket list`);
+        $.ajax({
+          url: `/api/burgers/wishlist/${burgerName}`,
+          type: "POST",
+          success: function(result) {
+            console.log("Success");
+            // console.log(result);
+            $("#wishlist").append(
+              `<li id="wishlist${result.id}">${result.name} <button value = ${result.id} onClick="consumeBurger(${result.id})">Devour it!</button></li>`
+            );
+          }
+        });
+        $("#addBurgerName").val = "";
+      }
+
+      function consumeBurger(burgerid) {
+        console.log(`.. adding to consumed list`);
+        $.ajax({
+          url: `/api/burgers/consumed/${burgerid}`,
+          type: "POST",
+          success: function(result) {
+            console.log("Success");
+            console.log(result);
+            $("#consumed").append(
+              `<li id="consumed${result.id}">${result.burger} <button value = ${result.id} onClick="consumeBurger()">Delete!</button></li>`
+            );
+            $(`#wishlist${burgerid}`).remove();
+          }
+        });
+
+        $.ajax({
+          url: `/api/burgers/consumed/${burgerid}`,
+          type: "DELETE",
+          success: function(result) {
+            console.log("Success");
+            $(`#wishlist${burgerid}`).remove();
+          }
+        });
+      }
+
+      $(document).ready(function() {
+        console.log(`Running our code`);
+        listWishList();
+        listConsumed();
+      });
+    </script>
+  </body>
+</html>

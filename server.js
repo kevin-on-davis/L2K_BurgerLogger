@@ -1,12 +1,13 @@
 var express = require("express");
 var exphbs = require("express-handlebars");
 var mysql = require("mysql");
+const path = require("path");
 
 var app = express();
 
 // Set the port of our application
 // process.env.PORT lets the port be set by Heroku
-var PORT = process.env.PORT || 8080;
+var PORT = process.env.PORT || 3000;
 
 // Sets up the Express app to handle data parsing
 app.use(express.urlencoded({ extended: true }));
@@ -14,93 +15,99 @@ app.use(express.json());
 
 app.engine("handlebars", exphbs({ defaultLayout: "main" }));
 app.set("view engine", "handlebars");
+// app.use(express.static("public"));
 
-var connection = mysql.createConnection({
+class Database {
+  constructor(config) {
+    this.connection = mysql.createConnection(config);
+  }
+  query(sql, args) {
+    return new Promise((resolve, reject) => {
+      this.connection.query(sql, args, (err, rows) => {
+        if (err) return reject(err);
+        resolve(rows);
+      });
+    });
+  }
+  close() {
+    return new Promise((resolve, reject) => {
+      this.connection.end(err => {
+        if (err) return reject(err);
+        resolve();
+      });
+    });
+  }
+}
+
+// if (process.env.JAWSDB_URL) {
+//   connection = mysql.createConnection(process.env.JAWSDB_URL);
+// } else {
+const db = new Database({
   host: "localhost",
   port: 3306,
   user: "root",
   password: "IamTheBoxGhost1971",
-  database: "movie_planner_db"
+  database: "burger_bucketlist_db"
+});
+// }
+
+app.get("/", function(req, res) {
+  res.sendFile(path.join(__dirname + "/public/index.html"));
 });
 
-connection.connect(function (err) {
-  if (err) {
-    console.error("error connecting: " + err.stack);
-    return;
-  }
-
-  console.log("connected as id " + connection.threadId);
+app.get("/burgers", async function(req, res) {
+  let result = await db.query("SELECT * FROM wishlist");
+  res.send(result);
 });
 
-// Use Handlebars to render the main index.html page with the movies in it.
-app.get("/", function (req, res) {
-  connection.query("SELECT * FROM movies;", function (err, data) {
-    if (err) {
-      return res.status(500).end();
-    }
+app.get("/consumed", async function(req, res) {
+  let result = await db.query("SELECT * FROM consumed");
+  res.send(result);
+});
 
-    res.render("index", { movies: data });
+// Create a new wishlist entry
+app.post("/api/burgers/wishlist/:burgerName", async function(req, res) {
+  result = await db.query("insert into wishlist(burger) values (?)", [
+    req.params.burgerName
+  ]);
+
+  res.json({
+    id: result.insertID,
+    name: req.params.burgerName
   });
 });
 
-// Create a new movie
-app.post("/api/movies", function (req, res) {
-  connection.query("INSERT INTO movies (movie) VALUES (?)", [req.body.movie], function (err, result) {
-    if (err) {
-      return res.status(500).end();
-    }
+// Move entry from wishlist table to consumed table
+app.post("/api/burgers/consumed/:burgerid", async function(req, res) {
+  console.log(req.params.burgerid);
+  ins_con = await db.query(
+    "insert into consumed(burger) select burger from wishlist where id = ?",
+    [req.params.burgerid]
+  );
 
-    // Send back the ID of the new movie
-    res.json({ id: result.insertId });
-    console.log({ id: result.insertId });
-  });
+  del_wish = await db.query("delete from wishlist where id =?", [
+    req.params.burgerid
+  ]);
+
+  result = await db.query(
+    `select * from consumed where id = ${req.params.burgerid}`
+  );
 });
 
-// Retrieve all movies
-app.get("/api/movies", function (req, res) {
-  connection.query("SELECT * FROM movies;", function (err, data) {
-    if (err) {
-      return res.status(500).end();
-    }
-
-    res.json(data);
-  });
+// Retrieve all wishlist entries
+app.get("/api/burgers/wishlist", async function(req, res) {
+  await db.query("SELECT * FROM wishlist");
+  res.json(data);
 });
 
-// Update a movie
-app.put("/api/movies/:id", function (req, res) {
-  connection.query("UPDATE movies SET movie = ? WHERE id = ?", [req.body.movie, req.params.id], function (err, result) {
-    if (err) {
-      // If an error occurred, send a generic server failure
-      return res.status(500).end();
-    }
-    else if (result.changedRows === 0) {
-      // If no rows were changed, then the ID must not exist, so 404
-      return res.status(404).end();
-    }
-    res.status(200).end();
-
-  });
-});
-
-// Delete a movie
-app.delete("/api/movies/:id", function (req, res) {
-  connection.query("DELETE FROM movies WHERE id = ?", [req.params.id], function (err, result) {
-    if (err) {
-      // If an error occurred, send a generic server failure
-      return res.status(500).end();
-    }
-    else if (result.affectedRows === 0) {
-      // If no rows were changed, then the ID must not exist, so 404
-      return res.status(404).end();
-    }
-    res.status(200).end();
-
-  });
+// Retrieve all consumed entries
+app.get("/api/burgers/consumed", async function(req, res) {
+  await db.query("SELECT * FROM consumed");
+  res.json(data);
 });
 
 // Start our server so that it can begin listening to client requests.
-app.listen(PORT, function () {
+app.listen(PORT, function() {
   // Log (server-side) when our server has started
   console.log("Server listening on: http://localhost:" + PORT);
 });
