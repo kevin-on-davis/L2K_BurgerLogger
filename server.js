@@ -2,7 +2,7 @@ var express = require("express");
 var exphbs = require("express-handlebars");
 var mysql = require("mysql");
 const path = require("path");
-var db;
+let db;
 
 var app = express();
 
@@ -41,7 +41,7 @@ class Database {
 }
 
 if (process.env.JAWSDB_URL) {
-  connection = mysql.createConnection(process.env.JAWSDB_URL);
+  db = new Database(process.env.JAWSDB_URL);
 } else {
   db = new Database({
     host: "localhost",
@@ -80,7 +80,6 @@ app.post("/api/burgers/wishlist/:burgerName", async function(req, res) {
 
 // Move entry from wishlist table to consumed table
 app.post(`/api/burgers/consumed/:burgername`, async function(req, res) {
-  console.log("Consuming " + req.params.burgername);
   let ins_con = await db.query(
     "insert into consumed(burger) select burger from wishlist where burger = ?",
     [req.params.burgername]
@@ -93,8 +92,15 @@ app.post(`/api/burgers/consumed/:burgername`, async function(req, res) {
   let result = await db.query(`select * from consumed where burger = ?`, [
     req.params.burgername
   ]);
-  console.log(result);
-  res.json(result);
+  res.send(result);
+});
+
+app.delete(`/api/burgers/delete/:burgername`, async function(req, res) {
+  let del_consumed = await db.query("delete from consumed where burger =?", [
+    req.params.burgername
+  ]);
+  console.log(del_consumed);
+  res.send(del_consumed);
 });
 
 // Retrieve all wishlist entries
