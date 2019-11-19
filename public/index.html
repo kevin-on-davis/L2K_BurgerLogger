@@ -93,7 +93,10 @@
         const burgerName = $("#addBurgerName")
           .val()
           .trim();
-        if (wishArray.indexOf(burgerName.toLowerCase()) == -1) {
+        if (
+          wishArray.indexOf(burgerName.toLowerCase()) == -1 &&
+          consArray.indexOf(burgerName.toLowerCase()) == -1
+        ) {
           console.log(`.. adding ${burgerName} to bucket list`);
           $(`#addResultMsg`).val("");
           $("#addBurgerName").val("");
