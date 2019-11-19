@@ -2,6 +2,7 @@ var express = require("express");
 var exphbs = require("express-handlebars");
 var mysql = require("mysql");
 const path = require("path");
+var db;
 
 var app = express();
 
@@ -39,17 +40,17 @@ class Database {
   }
 }
 
-// if (process.env.JAWSDB_URL) {
-//   connection = mysql.createConnection(process.env.JAWSDB_URL);
-// } else {
-const db = new Database({
-  host: "localhost",
-  port: 3306,
-  user: "root",
-  password: "IamTheBoxGhost1971",
-  database: "burger_bucketlist_db"
-});
-// }
+if (process.env.JAWSDB_URL) {
+  connection = mysql.createConnection(process.env.JAWSDB_URL);
+} else {
+  db = new Database({
+    host: "localhost",
+    port: 3306,
+    user: "root",
+    password: "IamTheBoxGhost1971",
+    database: "burger_bucketlist_db"
+  });
+}
 
 app.get("/", function(req, res) {
   res.sendFile(path.join(__dirname + "/public/index.html"));
