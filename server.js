@@ -56,18 +56,18 @@ app.get("/", function(req, res) {
 });
 
 app.get("/burgers", async function(req, res) {
-  let result = await db.query("SELECT * FROM wishlist");
+  let result = await db.query(`SELECT * FROM wishlist`);
   res.send(result);
 });
 
 app.get("/consumed", async function(req, res) {
-  let result = await db.query("SELECT * FROM consumed");
+  let result = await db.query(`SELECT * FROM consumed`);
   res.send(result);
 });
 
 // Create a new wishlist entry
 app.post("/api/burgers/wishlist/:burgerName", async function(req, res) {
-  result = await db.query("insert into wishlist(burger) values (?)", [
+  result = await db.query(`insert into wishlist(burger) values (?)`, [
     req.params.burgerName
   ]);
 
@@ -78,26 +78,28 @@ app.post("/api/burgers/wishlist/:burgerName", async function(req, res) {
 });
 
 // Move entry from wishlist table to consumed table
-app.post("/api/burgers/consumed/:burgerid", async function(req, res) {
-  console.log(req.params.burgerid);
-  ins_con = await db.query(
-    "insert into consumed(burger) select burger from wishlist where id = ?",
-    [req.params.burgerid]
+app.post(`/api/burgers/consumed/:burgername`, async function(req, res) {
+  console.log("Consuming " + req.params.burgername);
+  let ins_con = await db.query(
+    "insert into consumed(burger) select burger from wishlist where burger = ?",
+    [req.params.burgername]
   );
 
-  del_wish = await db.query("delete from wishlist where id =?", [
-    req.params.burgerid
+  let del_wish = await db.query("delete from wishlist where burger =?", [
+    req.params.burgername
   ]);
 
-  result = await db.query(
-    `select * from consumed where id = ${req.params.burgerid}`
-  );
+  let result = await db.query(`select * from consumed where burger = ?`, [
+    req.params.burgername
+  ]);
+  console.log(result);
+  res.json(result);
 });
 
 // Retrieve all wishlist entries
 app.get("/api/burgers/wishlist", async function(req, res) {
-  await db.query("SELECT * FROM wishlist");
-  res.json(data);
+  result = await db.query("SELECT * FROM wishlist");
+  res.json(result);
 });
 
 // Retrieve all consumed entries

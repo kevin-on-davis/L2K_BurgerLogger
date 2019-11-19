@@ -34,9 +34,22 @@
         <ul id="consumed"></ul>
       </div>
     </div>
+    <div>
+      <h3>
+        <input
+          id="addResultMsg"
+          class="col center"
+          type="text"
+          style="display:flex; flex-direction: row; background-color: inherit; border:none"
+          value=""
+          readonly
+        />
+      </h3>
+    </div>
     ​
     <!-- <script src="../server.js"></script> -->
     <script>
+      var wishArray = [];
       function listWishList() {
         console.log(`.. listing bucket list`);
         $.ajax({
@@ -46,8 +59,9 @@
             console.log("Success");
             console.log(result);
             result.forEach(burger => {
+              wishArray.push(burger.burger);
               $("#wishlist").append(
-                `<li id="wishlist${burger.id}"><div style="justify-content: space-between">${burger.burger} <button id="${burger.burger}" value = ${burger.id} onClick="consumeBurger(${burger.id})">Devour it!</button></div></li>`
+                `<li id="wishlist${burger.burger}"><div style="justify-content: space-between">${burger.burger} <button id="${burger.burger}" value = "${burger.burger}" onClick="consumeBurger("${burger.burger}")">Devour it!</button></div></li>`
               );
             });
           }
@@ -61,10 +75,10 @@
           type: "GET",
           success: function(result) {
             console.log("Success");
-            console.log(result);
             result.forEach(burger => {
+              wishArray.push(burger.burger);
               $("#consumed").append(
-                `<li id="consumed${burger.id}"><div style="justify-content: space-between">${burger.burger}</div></li>`
+                `<li id="consumed${burger.burger}"><div style="justify-content: space-between">${burger.burger} <button value = "${burger.burger}" onClick="deleteBurger(${burger.burger})"">Delete!</button></div></li>`
               );
             });
           }
@@ -75,42 +89,40 @@
         const burgerName = $("#addBurgerName")
           .val()
           .trim();
-        console.log(`.. adding ${burgerName} to bucket list`);
-        $.ajax({
-          url: `/api/burgers/wishlist/${burgerName}`,
-          type: "POST",
-          success: function(result) {
-            console.log("Success");
-            // console.log(result);
-            $("#wishlist").append(
-              `<li id="wishlist${result.id}">${result.name} <button value = ${result.id} onClick="consumeBurger(${result.id})">Devour it!</button></li>`
-            );
-          }
-        });
-        $("#addBurgerName").val = "";
+        $("#addBurgerName").val("");
+        console.log(wishArray.indexOf(burgerName));
+        if (wishArray.indexOf(burgerName) == -1) {
+          console.log(`.. adding ${burgerName} to bucket list`);
+          $.ajax({
+            url: `/api/burgers/wishlist/${burgerName}`,
+            type: "POST",
+            success: function(result) {
+              console.log("Success");
+              wishArray.push(result.burger);
+              $("#wishlist").append(
+                `<li id="wishlist${result.burger}">${result.burger} <button value = "${result.id}"" onClick="consumeBurger(${result.burger})">Devour it!</button></li>`
+              );
+            }
+          });
+        } else {
+          $(`#addResultMsg`).val(
+            "This burger was already added to wishlist or consumed!!"
+          );
+        }
       }
 
-      function consumeBurger(burgerid) {
+      function consumeBurger(burgerName) {
         console.log(`.. adding to consumed list`);
         $.ajax({
-          url: `/api/burgers/consumed/${burgerid}`,
+          url: `/api/burgers/consumed/${burgerName}`,
           type: "POST",
           success: function(result) {
-            console.log("Success");
-            console.log(result);
+            console.log("Success " + result);
+            $(`#wishlist${burgerName}`).remove();
             $("#consumed").append(
-              `<li id="consumed${result.id}">${result.burger} <button value = ${result.id} onClick="consumeBurger()">Delete!</button></li>`
+              `<li id="consumed${result.id}">${result.burger} <button value = ${result.id} onClick="deleteBurger()">Delete!</button></li>`
             );
-            $(`#wishlist${burgerid}`).remove();
-          }
-        });
-
-        $.ajax({
-          url: `/api/burgers/consumed/${burgerid}`,
-          type: "DELETE",
-          success: function(result) {
-            console.log("Success");
-            $(`#wishlist${burgerid}`).remove();
+            // $(`#wishlist${burgerid}`).remove();
           }
         });
       }
