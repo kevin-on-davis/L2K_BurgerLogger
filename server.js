@@ -99,7 +99,6 @@ app.delete(`/api/burgers/delete/:burgername`, async function(req, res) {
   let del_consumed = await db.query("delete from consumed where burger =?", [
     req.params.burgername
   ]);
-  console.log(del_consumed);
   res.send(del_consumed);
 });
 

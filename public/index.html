@@ -50,14 +50,16 @@
     <!-- <script src="../server.js"></script> -->
     <script>
       var wishArray = [];
+      var consArray = [];
       function listWishList() {
+        wishArray = [];
+        $("#wishlist").empty();
         console.log(`.. listing bucket list`);
         $.ajax({
           url: `/burgers`,
           type: "GET",
           success: function(result) {
             console.log("Success");
-            console.log(result);
             result.forEach(burger => {
               wishArray.push(burger.burger.toLowerCase());
               $("#wishlist").append(
@@ -69,6 +71,8 @@
       }
 
       function listConsumed() {
+        consArray = [];
+        $("#consumed").empty();
         console.log(`.. listing consumed list`);
         $.ajax({
           url: `/consumed`,
@@ -76,7 +80,7 @@
           success: function(result) {
             console.log("Success");
             result.forEach(burger => {
-              wishArray.push(burger.burger.toLowerCase());
+              consArray.push(burger.burger.toLowerCase());
               $("#consumed").append(
                 `<li id="consumed${burger.burger}"><div style="justify-content: space-between">${burger.burger} <button value = "${burger.burger}" onClick="deleteBurger('${burger.burger}')"">Delete!</button></div></li>`
               );
@@ -92,8 +96,7 @@
         if (wishArray.indexOf(burgerName.toLowerCase()) == -1) {
           console.log(`.. adding ${burgerName} to bucket list`);
           $(`#addResultMsg`).val("");
-          // $("#addBurgerName").val("");
-          console.log(burgerName);
+          $("#addBurgerName").val("");
           $.ajax({
             url: `/api/burgers/wishlist/${burgerName}`,
             type: "POST",
@@ -118,10 +121,9 @@
           url: `/api/burgers/consumed/${burgerName}`,
           type: "POST",
           success: function(result) {
-            console.log("Result = ", result);
             const burgerId = result[0].id;
-            console.log("Success consuming " + $(`#wishlist${burgerId}`));
-            $(`#wishlist${burgerId}`).remove();
+            consArray.push(result[0].burger.toLowerCase());
+            listWishList();
             $("#consumed").append(
               `<li id="consumed${burgerId}">${result[0].burger} <button value = "${burgerId}" onClick="deleteBurger(${burgerId})">Delete!</button></li>`
             );
@@ -135,8 +137,7 @@
           url: `/api/burgers/delete/${burgerName}`,
           type: "DELETE",
           success: function(result) {
-            console.log("Success " + $(`#consumed${burgerName}`));
-            $(`#consumed${burgerName}`).remove();
+            listConsumed();
           }
         });
       }
